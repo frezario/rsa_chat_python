@@ -25,7 +25,9 @@ class Server:
             c, addr = self.s.accept()
             username = c.recv(1024).decode()
             print(f"{username} tries to connect")
-            self.broadcast(f'new person has joined: {username}')
+            self.broadcast('-'*30)
+            self.broadcast(f'**{username} has just joined**')
+            self.broadcast('-'*30)
             self.username_lookup[c] = username
             self.clients.append(c)
 
@@ -60,14 +62,14 @@ class Server:
             receiver = c.recv(1024).decode()
             time.sleep(0.1)
             msg = c.recv(1024)
-            # print(receiver)
             # TODO: FILTERING THE CLIENTS!
+            # DONE
             try:
                 # For the one specific receiver
                 self.clients[int(receiver)].send(msg)
 
                 for num, client in enumerate(self.clients):
-                    if client != c:
+                    if client != c and num != int(receiver):
                         client.send(f"user {self.clients.index(c)} tells user {receiver} the secret!".encode())
             except Exception as err:
                 # For the whole community
