@@ -24,8 +24,6 @@ class Server:
         self.s.bind((self.host, self.port))
         self.s.listen(100)
 
-        # generate keys ...
-
         while True:
             c, addr = self.s.accept()
             username = c.recv(1024).decode()
@@ -64,8 +62,7 @@ class Server:
         while True:
             receiver = c.recv(1024).decode()
             time.sleep(0.1)
-            msg = c.recv(1024)
-            msg = msg.decode()
+            msg = c.recv(1024).decode()
             try:
                 # For the one specific receiver
                 msg = str(encrypt(msg, self.user_keys[receiver]))
@@ -82,7 +79,6 @@ class Server:
                 # self.broadcast(str(self.user_keys.keys()))
                 for num, client in enumerate(self.clients):
                     if client != c:
-                        print(msg)
                         enc_msg = str(encrypt(msg, self.user_keys[str(num)]))
                         client.send(enc_msg.encode())
 
