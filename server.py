@@ -3,6 +3,11 @@ import threading
 import time
 
 
+def encrypt(message: str, key, base=8):
+    message = int(''.join([bin(ord(char))[2:].rjust(8, '0') for char in message]), 2)
+    return pow(message, key[1], key[0])
+
+
 class Server:
 
     def __init__(self, port: int) -> None:
@@ -25,9 +30,7 @@ class Server:
             c, addr = self.s.accept()
             username = c.recv(1024).decode()
             print(f"{username} tries to connect")
-            self.broadcast('-'*30)
             self.broadcast(f'**{username} has just joined**')
-            self.broadcast('-'*30)
             self.username_lookup[c] = username
             self.clients.append(c)
 
@@ -42,19 +45,19 @@ class Server:
 
             # ...
 
-            # send the encrypted secret to a client 
+            # send the encrypted secret to a client
 
             # ...
 
             threading.Thread(target=self.handle_client, args=(c, addr,)).start()
 
     def broadcast(self, msg: str):
-        for client in self.clients:
+        for num, client in enumerate(self.clients):
             # encrypt the message
 
-            # ...
+            enc_msg = str(encrypt(msg, self.user_keys[str(num)]))
 
-            client.send(msg.encode())
+            client.send(enc_msg.encode())
 
     def handle_client(self, c: socket, addr):
         # TODO: MESSAGE INTEGRITY!
@@ -62,22 +65,26 @@ class Server:
             receiver = c.recv(1024).decode()
             time.sleep(0.1)
             msg = c.recv(1024)
-            # TODO: FILTERING THE CLIENTS!
-            # DONE
+            msg = msg.decode()
             try:
                 # For the one specific receiver
-                self.clients[int(receiver)].send(msg)
+                msg = str(encrypt(msg, self.user_keys[receiver]))
+                self.clients[int(receiver)].send(msg.encode())
 
                 for num, client in enumerate(self.clients):
                     if client != c and num != int(receiver):
-                        client.send(f"user {self.clients.index(c)} tells user {receiver} the secret!".encode())
+                        message = f"user {self.clients.index(c)} tells user {receiver} the secret!"
+                        message = str(encrypt(message, self.user_keys[str(num)]))
+                        client.send(message.encode())
             except Exception as err:
                 # For the whole community
                 # self.broadcast(f"I was failed, {repr(receiver)}")
                 # self.broadcast(str(self.user_keys.keys()))
                 for num, client in enumerate(self.clients):
                     if client != c:
-                        client.send(msg)
+                        print(msg)
+                        enc_msg = str(encrypt(msg, self.user_keys[str(num)]))
+                        client.send(enc_msg.encode())
 
 
 if __name__ == "__main__":
