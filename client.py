@@ -55,7 +55,10 @@ class Client:
         except Exception as e:
             print("[client]: could not connect to server: ", e)
             return
-
+        print('-'*30)
+        print("**You've just entered the chat**")
+        print(f"Your username is {self.username}.")
+        print('-'*30)
         self.s.send(self.username.encode())
 
         # create key pairs
