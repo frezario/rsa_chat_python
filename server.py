@@ -68,9 +68,11 @@ class Server:
 
                 for num, client in enumerate(self.clients):
                     if client != c:
-                        client.send(f"user {self.clients.index(c)} tells user {receiver} the secret!")
-            except:
+                        client.send(f"user {self.clients.index(c)} tells user {receiver} the secret!".encode())
+            except Exception as err:
                 # For the whole community
+                # self.broadcast(f"I was failed, {repr(receiver)}")
+                # self.broadcast(str(self.user_keys.keys()))
                 for num, client in enumerate(self.clients):
                     if client != c:
                         client.send(msg)
