@@ -6,9 +6,6 @@ import time
 from test import get_random_prime
 
 
-# from server import s
-
-
 class Client:
 
     def __init__(self, server_ip: str, port: int, username: str) -> None:
@@ -32,6 +29,7 @@ class Client:
                 continue
         self.public_key = (n, e)
         self._private_key = (n, d)
+        # print(self._private_key)
 
     def _encrypt(self, message: str, key, base=8):
         assert self.public_key is not None
@@ -79,7 +77,7 @@ class Client:
 
             # decrypt message with the secret key
 
-            # ... 
+            message = self._decrypt(int(message))
 
             print(message)
 
