@@ -1,6 +1,8 @@
 import socket
 import threading
 import random
+import time
+
 from test import get_random_prime
 
 
@@ -46,8 +48,6 @@ class Client:
         message = ''.join([chr(int(item, 2)) for item in chunks])
         return message
 
-
-
     def init_connection(self):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -60,10 +60,11 @@ class Client:
 
         # create key pairs
         self._generate_keys()
+
         # exchange public keys
+        self.s.send((str(self.public_key[0]) + ' ' + str(self.public_key[1])).encode())
 
         # receive the encrypted secret key
-
         message_handler = threading.Thread(target=self.read_handler, args=())
         message_handler.start()
         input_handler = threading.Thread(target=self.write_handler, args=())
@@ -80,22 +81,29 @@ class Client:
             print(message)
 
     def write_handler(self):
+        # TODO: MESSAGE INTEGRITY!
         while True:
             message = self.username + ': ' + input()
 
-            # encrypt message with the public key
+            # encrypt message with the public key of the receiver
+            # message = str(self._encrypt(message, self.public_key))
 
-            # ...
-
+            # Now message is an integer represented by a string
+            message = message.split(' | ')
+            if len(message) == 1:
+                message = message[0]
+                receiver = ' '
+            else:
+                message, receiver = message[0], message[1].strip()
+            self.s.send(receiver.encode())
             self.s.send(message.encode())
 
 
 if __name__ == "__main__":
-    count = 0
+    # count = 0
     with open("count.txt", mode='r') as file:
         count = int(file.readlines()[0])
     with open("count.txt", mode='w') as file:
         file.write(str(count + 1))
-    cl = Client("127.0.0.1", 9001, "user" + str(count))
+    cl = Client("127.0.0.1", 9001, "user " + str(count))
     cl.init_connection()
-    input()
