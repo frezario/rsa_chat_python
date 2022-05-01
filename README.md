@@ -18,12 +18,12 @@ The algorithm is the following:
 
 1. A server and Alice exchange public keys: server receives Alice public kay and Alice receives server public key.
 2. The same goes for Bob.
-3. Alice encrypts the message using server public key and somehow shows that it is for Bob. In our case, we chose <message> | <id> format to show that message <message> should be delivered to the client with id <id>.
+3. Alice encrypts the message using server public key and somehow shows that it is for Bob. In our case, we chose **message** | **id** format to show that message **message** should be delivered to the client with id **id**.
 4. Server receives the message, decrypts it using it's own private key.
 5. Server decrypts the message using Bob's public key and sends it to Bob.
 6. Bob receives encrypted message using his private key and now can read the secret.
 
-If <id> wasn't specified, we simply show message to all receivers.
+If **id** wasn't specified, we simply show message to all receivers.
 
 The example of usage:
 
