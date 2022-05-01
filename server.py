@@ -1,10 +1,12 @@
 import socket
 import threading
 import time
+import random
+from rsa import get_random_prime
 
 
 def encrypt(message: str, key, base=8):
-    message = int(''.join([bin(ord(char))[2:].rjust(8, '0') for char in message]), 2)
+    message = int(''.join([bin(ord(char))[2:].rjust(base, '0') for char in message]), 2)
     return pow(message, key[1], key[0])
 
 
@@ -16,15 +18,42 @@ class Server:
         self.clients = []
         self.username_lookup = {}
         self.user_keys = {}
+        self.public_key = None
+        self._private_key = None
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         with open("count.txt", mode='w') as file:
             file.write('0')
 
+    def _generate_keys(self, bits=512):
+        p, q = get_random_prime(bits), get_random_prime(bits)
+        n = p * q
+        phi = (p - 1) * (q - 1)
+        while True:
+            try:
+                e = random.choice([5, 17, 257, 65537])
+                d = pow(e, -1, phi)
+                break
+            except:
+                continue
+        self.public_key = (n, e)
+        self._private_key = (n, d)
+        # print(self._private_key)
+
+    def _decrypt(self, encrypted: int, base=8):
+        m = pow(encrypted, self._private_key[1], self._private_key[0])
+        message = bin(m)[2:]
+        rem = base - (len(message) % base)
+        message = '0' * rem + message
+        chunks = [message[i:i + base] for i in range(0, len(message), base)]
+        message = ''.join([chr(int(item, 2)) for item in chunks])
+        return message
+
     def start(self):
         self.s.bind((self.host, self.port))
         self.s.listen(100)
-
+        self._generate_keys()
         while True:
+            # Receiving user and his username
             c, addr = self.s.accept()
             username = c.recv(1024).decode()
             print(f"{username} tries to connect")
@@ -32,20 +61,15 @@ class Server:
             self.username_lookup[c] = username
             self.clients.append(c)
 
+            # sending public key of the server to the client
+            c.send(str(self.public_key).encode())
+
             # receiving client's public key to store.
 
             public_key = c.recv(1024).decode()
             public_key = tuple(map(int, public_key.split(' ')))
-            print(f"Public key received from {username}:",  public_key)
+            print(f"Public key received from {username}:", public_key)
             self.user_keys[username.split(' ')[1]] = public_key
-
-            # encrypt the secret with the clients public key
-
-            # ...
-
-            # send the encrypted secret to a client
-
-            # ...
 
             threading.Thread(target=self.handle_client, args=(c, addr,)).start()
 
@@ -62,7 +86,9 @@ class Server:
         while True:
             receiver = c.recv(1024).decode()
             time.sleep(0.1)
+            # Encrypting the message
             msg = c.recv(1024).decode()
+            msg = self._decrypt(int(msg))
             try:
                 # For the one specific receiver
                 msg = str(encrypt(msg, self.user_keys[receiver]))
