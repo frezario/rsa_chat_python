@@ -118,12 +118,11 @@ class Server:
         :param addr: the addres of the client.
         :return: nothing
         """
-        # TODO: MESSAGE INTEGRITY!
         while True:
             receiver = c.recv(1024).decode()
-            # time.sleep(0.1)
             # Encrypting the message
             msg = c.recv(1024).decode()
+            msg_hash, msg = msg.split(' | ')
             msg = self._decrypt(int(msg))
             try:
                 # For the one specific receiver
@@ -142,7 +141,7 @@ class Server:
                 for num, client in enumerate(self.clients):
                     if client != c:
                         enc_msg = str(encrypt(msg, self.user_keys[str(num)]))
-                        client.send(enc_msg.encode())
+                        client.send(enc_msg.encode() + ' | '.encode() + msg_hash.encode())
 
 
 if __name__ == "__main__":
