@@ -2,7 +2,7 @@
 
 A simple multi-core chat that involves the usege of RSA encryption.
 
-Based on textbook RSA.
+Based on textbook RSA (prime numbers are close to 2^512)
 
 To run, simply execute the server.py and then client.py-s one by one.
 
