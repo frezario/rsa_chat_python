@@ -23,6 +23,8 @@ The algorithm is the following:
 5. Server decrypts the message using Bob's public key and sends it to Bob.
 6. Bob receives encrypted message using his private key and now can read the secret.
 
+Checking of the message integrity is implemented: check whether the hash of the sent message before encoding is equal to the hash of the received message after decoding.
+
 If **id** wasn't specified, we simply show message to all receivers.
 
 The example of usage:
