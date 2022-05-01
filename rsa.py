@@ -12,16 +12,19 @@ first_primes_list = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
                      307, 311, 313, 317, 331, 337, 347, 349]
 
 
-def nBitRandom(n):
+def n_bit_random(n):
+    """
+    Returns a random number with len(bin(number)) == n
+    """
     return random.randrange(2 ** (n - 1) + 1, 2 ** n - 1)
 
 
-def getLowLevelPrime(n):
-    '''Generate a prime candidate divisible
-    by first primes'''
+def get_low_level_prime(n):
+    """Generates a prime candidate divisible
+    by first primes"""
     while True:
         # Obtain a random number
-        pc = nBitRandom(n)
+        pc = n_bit_random(n)
 
         # Test divisibility by pre-generated
         # primes
@@ -32,7 +35,7 @@ def getLowLevelPrime(n):
             return pc
 
 
-def isMillerRabinPassed(mrc):
+def is_miller_rabin_passed(mrc):
     '''Run 20 iterations of Rabin Miller Primality test'''
     maxDivisionsByTwo = 0
     ec = mrc - 1
@@ -60,8 +63,8 @@ def isMillerRabinPassed(mrc):
 
 def get_random_prime(bits=512):
     while True:
-        prime_candidate = getLowLevelPrime(bits)
-        if not isMillerRabinPassed(prime_candidate):
+        prime_candidate = get_low_level_prime(bits)
+        if not is_miller_rabin_passed(prime_candidate):
             continue
         else:
             return prime_candidate
