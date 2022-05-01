@@ -3,7 +3,7 @@ import threading
 import random
 import time
 
-from test import get_random_prime
+from rsa import get_random_prime
 
 
 class Client:
@@ -53,11 +53,18 @@ class Client:
         except Exception as e:
             print("[client]: could not connect to server: ", e)
             return
-        print('-'*30)
+        print('-' * 30)
         print("**You've just entered the chat**")
         print(f"Your username is {self.username}.")
-        print('-'*30)
+        print('-' * 30)
         self.s.send(self.username.encode())
+
+        # receiving server keys
+        server_key = self.s.recv(1024).decode()
+        n, e = server_key.replace('(', '').replace(')', '').split(', ')
+        n, e = int(n), int(e)
+        self.server_key = n, e
+        # print(server_key)
 
         # create key pairs
         self._generate_keys()
@@ -81,13 +88,17 @@ class Client:
 
             print(message)
 
+    def send_to_server(self, msg: str):
+        msg = self._encrypt(msg, self.server_key)
+        self.s.send(str(msg).encode())
+
     def write_handler(self):
         # TODO: MESSAGE INTEGRITY!
         while True:
             message = self.username + ': ' + input()
 
-            # encrypt message with the public key of the receiver
-            # message = str(self._encrypt(message, self.public_key))
+            # encrypt message with the public key of the server
+            # message = str(self._encrypt(message, self.server_key))
 
             # Now message is an integer represented by a string
             message = message.split(' | ')
@@ -97,7 +108,8 @@ class Client:
             else:
                 message, receiver = message[0], message[1].strip()
             self.s.send(receiver.encode())
-            self.s.send(message.encode())
+            self.send_to_server(message)
+            # self.s.send(message.encode())
 
 
 if __name__ == "__main__":
