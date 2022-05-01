@@ -1,6 +1,7 @@
 import socket
 import threading
 import random
+import hashlib
 
 from rsa import get_random_prime
 
@@ -101,6 +102,14 @@ class Client:
         input_handler = threading.Thread(target=self.write_handler, args=())
         input_handler.start()
 
+    @staticmethod
+    def check_integrity(received_hash: bytes, msg: str):
+        real_hash = hashlib.sha224(msg.encode()).hexdigest()
+        if received_hash == '':
+            return True
+        return received_hash == real_hash
+
+
     def read_handler(self):
         """
         Handles the incoming message.
@@ -108,10 +117,12 @@ class Client:
         """
         while True:
             message = self.s.recv(1024).decode()
-
-            # decrypt message with the secret key
+            hash_and_message = message.split(' | ')
+            message = hash_and_message[0]
             message = self._decrypt(int(message))
-
+            if len(hash_and_message) != 1:
+                msg_hash = hash_and_message[1]
+                assert self.check_integrity(msg_hash, message), 'ERROR, message are changed!'
             print(message)
 
     def send_to_server(self, msg: str):
@@ -119,15 +130,15 @@ class Client:
         Sends a string message to the server through the
         protected channel.
         """
+        msg_hash = hashlib.sha224(msg.encode()).hexdigest()
         msg = self._encrypt(msg, self.server_key)
-        self.s.send(str(msg).encode())
+        self.s.send(msg_hash.encode() + ' | '.encode() + str(msg).encode())
 
     def write_handler(self):
         """
         Handles user input.
         :return: nothing
         """
-        # TODO: MESSAGE INTEGRITY!
         while True:
             message = self.username + ': ' + input()
 
@@ -143,7 +154,6 @@ class Client:
                 message, receiver = message[0], message[1].strip()
             self.s.send(receiver.encode())
             self.send_to_server(message)
-            # self.s.send(message.encode())
 
 
 if __name__ == "__main__":
