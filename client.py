@@ -1,12 +1,14 @@
 import socket
 import threading
 import random
-import time
 
 from rsa import get_random_prime
 
 
 class Client:
+    """
+    Client class implementation.
+    """
 
     def __init__(self, server_ip: str, port: int, username: str) -> None:
         self.server_ip = server_ip
@@ -17,6 +19,12 @@ class Client:
         self._private_key = None
 
     def _generate_keys(self, bits=512):
+        """
+        Generates key pair.
+        Primes are selected close to 2 ** bits.
+        :param bits: how many bits we want to have.
+        :return: nothing
+        """
         p, q = get_random_prime(bits), get_random_prime(bits)
         n = p * q
         phi = (p - 1) * (q - 1)
@@ -29,15 +37,27 @@ class Client:
                 continue
         self.public_key = (n, e)
         self._private_key = (n, d)
-        # print(self._private_key)
 
     def _encrypt(self, message: str, key, base=8):
+        """
+        Encrypts a message using receiver's public key.
+        :param message: a message to encrypt.
+        :param key: receiver's public key.
+        :param base: how many bits does a symbol contain.
+        :return: a decrypted integer.
+        """
         assert self.public_key is not None
         assert self._private_key is not None
-        message = int(''.join([bin(ord(char))[2:].rjust(8, '0') for char in message]), 2)
+        message = int(''.join([bin(ord(char))[2:].rjust(base, '0') for char in message]), 2)
         return pow(message, key[1], key[0])
 
     def _decrypt(self, encrypted: int, base=8):
+        """
+        Decrypts a received integer into a message.
+        :param encrypted: an integer that was received by the _encrypt().
+        :param base: how many bits does a symbol contain.
+        :return: a decoded message.
+        """
         m = pow(encrypted, self._private_key[1], self._private_key[0])
         message = bin(m)[2:]
         rem = base - (len(message) % base)
@@ -47,6 +67,10 @@ class Client:
         return message
 
     def init_connection(self):
+        """
+        Sets a connection between server and user.
+        :return: nothing
+        """
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.s.connect((self.server_ip, self.port))
@@ -64,7 +88,6 @@ class Client:
         n, e = server_key.replace('(', '').replace(')', '').split(', ')
         n, e = int(n), int(e)
         self.server_key = n, e
-        # print(server_key)
 
         # create key pairs
         self._generate_keys()
@@ -79,20 +102,31 @@ class Client:
         input_handler.start()
 
     def read_handler(self):
+        """
+        Handles the incoming message.
+        :return: nothing
+        """
         while True:
             message = self.s.recv(1024).decode()
 
             # decrypt message with the secret key
-
             message = self._decrypt(int(message))
 
             print(message)
 
     def send_to_server(self, msg: str):
+        """
+        Sends a string message to the server through the
+        protected channel.
+        """
         msg = self._encrypt(msg, self.server_key)
         self.s.send(str(msg).encode())
 
     def write_handler(self):
+        """
+        Handles user input.
+        :return: nothing
+        """
         # TODO: MESSAGE INTEGRITY!
         while True:
             message = self.username + ': ' + input()
