@@ -10,7 +10,7 @@ Then, just type some text into one of the user terminals and enjoy the result.
 
 # HOW IT WORKS?
 
-Suppose user Alice wants to send secret message to user Bob. Then, we might want to build a protected connection between both of users.
+Suppose user Alice wants to send a secret message to user Bob. Then, we might want to build a protected connection between both of users.
 
 This protected connection is our server.
 
