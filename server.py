@@ -1,16 +1,25 @@
 import socket
 import threading
-import time
 import random
 from rsa import get_random_prime
 
 
 def encrypt(message: str, key, base=8):
+    """
+    Encrypts a message using receiver's public key.
+    :param message: a message to encrypt.
+    :param key: receiver's public key.
+    :param base: how many bits does a symbol contain.
+    :return: a decrypted integer.
+    """
     message = int(''.join([bin(ord(char))[2:].rjust(base, '0') for char in message]), 2)
     return pow(message, key[1], key[0])
 
 
 class Server:
+    """
+    Server class implementation.
+    """
 
     def __init__(self, port: int) -> None:
         self.host = '127.0.0.1'
@@ -25,6 +34,12 @@ class Server:
             file.write('0')
 
     def _generate_keys(self, bits=512):
+        """
+        Generates key pair.
+        Primes are selected close to 2 ** bits.
+        :param bits: how many bits we want to have.
+        :return: nothing
+        """
         p, q = get_random_prime(bits), get_random_prime(bits)
         n = p * q
         phi = (p - 1) * (q - 1)
@@ -40,6 +55,12 @@ class Server:
         # print(self._private_key)
 
     def _decrypt(self, encrypted: int, base=8):
+        """
+        Decrypts a received integer into a message.
+        :param encrypted: an integer that was received by the _encrypt().
+        :param base: how many bits does a symbol contain.
+        :return: a decoded message.
+        """
         m = pow(encrypted, self._private_key[1], self._private_key[0])
         message = bin(m)[2:]
         rem = base - (len(message) % base)
@@ -49,6 +70,10 @@ class Server:
         return message
 
     def start(self):
+        """
+        Initiates the key exchange between the server and a client.
+        :return: nothing
+        """
         self.s.bind((self.host, self.port))
         self.s.listen(100)
         self._generate_keys()
@@ -68,12 +93,17 @@ class Server:
 
             public_key = c.recv(1024).decode()
             public_key = tuple(map(int, public_key.split(' ')))
-            print(f"Public key received from {username}:", public_key)
+            # print(f"Public key received from {username}:", public_key)
             self.user_keys[username.split(' ')[1]] = public_key
 
             threading.Thread(target=self.handle_client, args=(c, addr,)).start()
 
     def broadcast(self, msg: str):
+        """
+        Sends a message to each of users.
+        :param msg:
+        :return:
+        """
         for num, client in enumerate(self.clients):
             # encrypt the message
 
@@ -82,10 +112,16 @@ class Server:
             client.send(enc_msg.encode())
 
     def handle_client(self, c: socket, addr):
+        """
+        Handles message, received from the client.
+        :param c: a client socket
+        :param addr: the addres of the client.
+        :return: nothing
+        """
         # TODO: MESSAGE INTEGRITY!
         while True:
             receiver = c.recv(1024).decode()
-            time.sleep(0.1)
+            # time.sleep(0.1)
             # Encrypting the message
             msg = c.recv(1024).decode()
             msg = self._decrypt(int(msg))
