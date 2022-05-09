@@ -1,6 +1,6 @@
 # RSA CHAT
 
-A simple multi-core chat that involves the usege of RSA encryption.
+A simple multi-core chat that involves the usage of RSA encryption.
 
 Based on textbook RSA (prime numbers are close to 2^512)
 
